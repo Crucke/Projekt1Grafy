@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle as pltCircle
 
-## Klasa koła, przechouje współrzędne x, y, promień oraz metodę sprawdzającą czy dwa koła się przecinają
+# Klasa koła, przechouje współrzędne x, y, promień oraz metodę sprawdzającą czy dwa koła się przecinają
 class Circle:
     def __init__(self, x, y, radius):
         self.x = x
@@ -16,13 +16,13 @@ class Circle:
         )
         return distance < self.radius + other_circle.radius
 
-## Klasa grafu kołowego, przechowuje listę kół, listę sąsiedztwa oraz metody tworzące listę sąsiedztwa, zapisujące graf do pliku oraz odczytujące graf z pliku
+# Klasa grafu kołowego, przechowuje listę kół, listę sąsiedztwa oraz metody tworzące listę sąsiedztwa, zapisujące graf do pliku oraz odczytujące graf z pliku
 class CircleGraph:
     def __init__(self, circles):
         self.circles = circles
         self.adjacency_list = self.create_adjacency_list()
 
-    ##Tworzenie listy sąsiedztw
+    # Tworzenie listy sąsiedztw
     def create_adjacency_list(self):
         adjacency_list = {i: [] for i in range(len(self.circles))}
 
@@ -33,7 +33,7 @@ class CircleGraph:
                     adjacency_list[j].append(i)
         return adjacency_list
 
-    ##Zapisywanie grafu do pliku z możliwością dodania komentarza
+    # Zapisywanie grafu do pliku z możliwością dodania komentarza
     def write_to_file(self, filename):
         print("Chcesz dodać komentarz? T/N")
         input_comment = input()
@@ -44,10 +44,8 @@ class CircleGraph:
                 f.write(f"#X Y Rad\n")
                 for circle in self.circles:
                     f.write(f"{circle.x} {circle.y} {circle.radius}\n")
-        else:
-            comment = ""
 
-    ##Odczytanie grafu z pliku
+    # Odczytanie grafu z pliku
     @classmethod
     def read_from_file(cls, filename):
         circles = []
@@ -59,18 +57,18 @@ class CircleGraph:
                 circles.append(Circle(x, y, radius))
         return cls(circles)
 
-    ##Dodanie nowego koła do grafu
+    # Dodanie nowego koła do grafu
     def add_circle(self, circle):
         self.circles.append(circle)
         self.adjacency_list = self.create_adjacency_list()
 
-    ##Rysowanie grafu
+    # Rysowanie grafu
     def plot_circles(self):
         fig, ax = plt.subplots()
         for circle in self.circles:
             circle_plot = plt.Circle((circle.x, circle.y), circle.radius, edgecolor='b', facecolor='none')
             ax.add_artist(circle_plot)
-            ax.plot(circle.x, circle.y, 'ro')  # plot center of circle
+            ax.plot(circle.x, circle.y, 'ro')
         ax.set_aspect('equal', adjustable='box')
         ax.set_xlim(min(circle.x - circle.radius for circle in self.circles) - 1,
                     max(circle.x + circle.radius for circle in self.circles) + 1)
@@ -82,6 +80,7 @@ class CircleGraph:
         plt.grid(True)
         plt.show()
 
+# Klasa Grafu
 class Graph:
     def __init__(self):
         self.adjacency_list = {}
