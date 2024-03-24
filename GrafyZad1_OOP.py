@@ -261,7 +261,6 @@ matrix = [
     [1, 0, 0, 1, 1, 0],
 ]
 
-
 # Utworzenie obiektu grafu
 graph = Graph()
 
