@@ -279,19 +279,18 @@ graph.matrix_to_list(matrix)
 # print(f"Lista sąsiedztwa:\n", graph.adjacency_list)
 
 # Wylicz długość wszystkich ścieżek o wskazanej długości
-# target_length = 2
-# all_paths = graph.all_dfs_paths(target_length)
+N
 
 # Wyliczanie liczby anihilacji grafu
-# print(f"Liczba anihilacji grafu: {graph.annihilation_number()}")
+print(f"Liczba anihilacji grafu: {graph.annihilation_number()}")
 
 # Wyznaczanie potencjałów wierzchołków
-# vertex_potentials = graph.find_potential()
-# print(f"Potencjały wierzchołków: {vertex_potentials}")
+vertex_potentials = graph.find_potential()
+print(f"Potencjały wierzchołków: {vertex_potentials}")
 
 # Wyznaczanie potencjału grafu
-# graph_potential = graph.graph_potential()
-# print(f"Potencjał grafu: {graph_potential}")
+graph_potential = graph.graph_potential()
+print(f"Potencjał grafu: {graph_potential}")
 
 # Odczytaj z pliku circles.txt i wypisz listę sąsiedztwa
 circle_graph = CircleGraph.read_from_file("circles.txt")
