@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle as pltCircle
+from time import time
 
 # Klasa koła, przechouje współrzędne x, y, promień oraz metodę sprawdzającą czy dwa koła się przecinają
 class Circle:
@@ -270,7 +271,9 @@ graph.matrix_to_list(matrix)
 # graph.write_snap_file("graph.snap")
 
 # Odczytanie grafu z pliku w formacie SNAP
-# graph.read_snap_file("graph.snap")
+timer_start_readFile = time()
+graph.read_snap_file("graph.snap")
+timer_end_readFile = time()
 
 # Dodania krawędzi i wierzchołków do listy sąsiedztwa
 # graph.add_vertex(graph, 6)
@@ -279,13 +282,21 @@ graph.matrix_to_list(matrix)
 # print(f"Lista sąsiedztwa:\n", graph.adjacency_list)
 
 # Wylicz długość wszystkich ścieżek o wskazanej długości
-N
+target_length = 3 
+time_start_findPaths = time()
+graph.all_dfs_paths(target_length)
+time_end_findPaths = time()
 
 # Wyliczanie liczby anihilacji grafu
-print(f"Liczba anihilacji grafu: {graph.annihilation_number()}")
+time_start_annihilation = time()
+annihilation_number = graph.annihilation_number()
+time_end_annihilation = time()
+print(f"Liczba anihilacji grafu: {annihilation_number}")
 
 # Wyznaczanie potencjałów wierzchołków
+timer_start_potential = time()
 vertex_potentials = graph.find_potential()
+timer_end_potential = time()
 print(f"Potencjały wierzchołków: {vertex_potentials}")
 
 # Wyznaczanie potencjału grafu
@@ -322,3 +333,8 @@ print("Pokazać graf? T/N")
 input_showPlot = input()
 if (input_showPlot == "T") or (input_showPlot == "t"):
     circle_graph.plot_circles()
+
+print(f"Czas odczytu pliku: {timer_end_readFile - timer_start_readFile} s")
+print(f"Czas wyliczania ścieżek: {time_end_findPaths - time_start_findPaths} s")
+print(f"Czas wyliczania liczby anihilacji: {time_end_annihilation - time_start_annihilation} s")
+print(f"Czas wyliczania potencjałów wierzchołków: {timer_end_potential - timer_start_potential} s")
