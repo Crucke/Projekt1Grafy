@@ -3,9 +3,10 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle as pltCircle
 from time import time
 
-# Klasa koła, przechouje współrzędne x, y, promień oraz metodę sprawdzającą czy dwa koła się przecinają
+# Klasa koła, przechouje id koła, współrzędne x, y, promień oraz metodę sprawdzającą czy dwa koła się przecinają
 class Circle:
-    def __init__(self, x, y, radius):
+    def __init__(self, circle_Id, x, y, radius):
+        self.id = circle_Id
         self.x = x
         self.y = y
         self.radius = radius
@@ -42,9 +43,9 @@ class CircleGraph:
             comment = input("Podaj komentarz: ")
             with open(filename, "w") as f:
                 f.write(f"#{comment}\n")
-                f.write(f"#X Y Rad\n")
+                f.write(f"#Id X Y Rad\n")
                 for circle in self.circles:
-                    f.write(f"{circle.x} {circle.y} {circle.radius}\n")
+                    f.write(f"{circle.id} {circle.x} {circle.y} {circle.radius}\n")
 
     # Odczytanie grafu z pliku
     @classmethod
@@ -54,14 +55,33 @@ class CircleGraph:
             for line in f:
                 if line.startswith("#"):
                     continue
-                x, y, radius = map(float, line.strip().split())
-                circles.append(Circle(x, y, radius))
+                id, x, y, radius = map(float, line.strip().split())
+                circles.append(Circle(id, x, y, radius))
         return cls(circles)
 
     # Dodanie nowego koła do grafu
     def add_circle(self, circle):
         self.circles.append(circle)
         self.adjacency_list = self.create_adjacency_list()
+
+    def delete_circle_by_id(self, circle_id):
+        circle_to_remove = None
+        for circle in self.circles:
+            if circle.id == circle_id:
+                circle_to_remove = circle
+
+        if circle_to_remove:
+            if circle_to_remove in self.adjacency_list:
+                del self.adjacency_list[circle_to_remove]
+            else:
+                print("Circle not found in the adjacency list.")
+        else:
+            print("Circle with ID", circle_id, "not found.")
+
+    def show_adjacency_list(self):
+        for circle, neighbors in self.adjacency_list.items():
+            print("Circle", circle.id, "neighbors:", [neighbor.id for neighbor in neighbors])
+
 
     # Rysowanie grafu
     def plot_circles(self):
@@ -315,7 +335,11 @@ timer_start_potential_File = time()
 graphFile.find_potential(graphFile.degrees)
 timer_end_potential_File = time()
 
+timer_start_readFile_circle = time()
 graphCircle = CircleGraph.read_from_file("circles.txt")
+timer_end_readFile_circle = time()
+
+
 
 # Funkcje interfejsu użytkownika
 def UI_HighLvL():
@@ -490,78 +514,37 @@ Podaj odpowiednią cyfrę:
 Wybierz akcję którą chcesz wykonać dla grafu kołowego:
 Podaj odpowiednią cyfrę:
 [1] Wyświetl listę sąsiedztw
-[2] Wyświetl listę stopni wierzchołków
-[3] Wyświetl macierz sąsiedztwa
-[4] Dodaj koło
-[5] Usuń koło
-[6] Wylicz liczbę anihilacji
-[7] Wylicz potencjał grafu
-[8] Wypisz czasy operacji na grafie                  
-[9] Wyjdź
+[2] Dodaj koło
+[3] Usuń koło
+[4] Narysuj graf
+[5] Zmień graf
 """)
             int_input_actionType = int(input())
             match(int_input_actionType):
                 case 1:
-                    timer_start_adjList_default = time()
-                    print(f"Lista sąsiedztwa:\n{graph.adjacency_list}\n")
-                    timer_end_adjList_default = time()
+                    print(f"Lista sąsiedztwa:\n{graphCircle.adjacency_list}\n")
                     UI_LowLvL(int_input_graphType)
                 case 2:
-                    timer_start_deg_default = time()
-                    print(f"Lista stopni wierzchołków:\n{graph.degrees}\n")
-                    timer_end_deg_default = time()
+                    x = float(input("Podaj współrzędną x: "))
+                    y = float(input("Podaj współrzędną y: "))
+                    radius = float(input("Podaj promień: "))
+                    circle = Circle(x, y, radius)
+                    graphCircle.add_circle(circle)
                     UI_LowLvL(int_input_graphType)
                 case 3:
-                    graph.print_matrix(graph.adjacency_list)
+                    graphCircle.show_adjacency_list()
+                    circle_id = int(input("Podaj id koła do usunięcia: "))
+                    graphCircle.delete_circle_by_id(circle_id)
+                    print(f"Usunięto koło o id: {circle_id}")
                     UI_LowLvL(int_input_graphType)
                 case 4:
-                    vertex = int(input("Podaj wierzchołek do dodania: "))
-                    timer_start_addVertex = time()
-                    graph.add_vertex(vertex)
-                    timer_end_addVertex = time()
+                    graphCircle.plot_circles()
                     UI_LowLvL(int_input_graphType)
                 case 5:
-                    vertex = int(input("Podaj wierzchołek do usunięcia: "))
-                    graph.remove_vertex(vertex)
-                    UI_LowLvL(int_input_graphType)
-                case 6:
-                    vertex1 = int(input("Podaj wierzchołek 1 dla którego chcesz stworzyć krawędź: "))
-                    vertex2 = int(input("Podaj wierzchołek 2 dla którego chcesz stworzyć krawędź: "))
-                    graph.add_edge(vertex1, vertex2)
-                    UI_LowLvL(int_input_graphType)
-                case 7:
-                    vertex1 = int(input("Podaj wierzchołek 1 dla którego chcesz usunąć krawędź: "))
-                    vertex2 = int(input("Podaj wierzchołek 2 dla którego chcesz usunąć krawędź: "))
-                    graph.remove_edge(vertex1, vertex2)
-                    UI_LowLvL(int_input_graphType)
-                case 8:
-                    timer_start_anihilation = time()
-                    print(f"Liczba anihilacji: {graph.annihilation_number}")
-                    timer_end_anihilation = time()
-                    UI_LowLvL(int_input_graphType)
-                case 9:
-                    timer_start_potential = time()
-                    print(f"Potencjał grafu: {graph.graph_potential}")
-                    timer_end_potential = time()
-                    UI_LowLvL(int_input_graphType)
-                case 10:
-                    target_length = int(input("Podaj długość ścieżki: "))
-                    timer_start_paths = time()
-                    graph.all_dfs_paths(target_length)
-                    timer_end_paths = time()
-                    print(f"Czas wyliczania stopni wierzchołków z pliku: {timer_end_paths - timer_start_paths} s")
-                    UI_LowLvL(int_input_graphType)
-                case 11:
-                    print(f"Czas wyliczenia listy sąsiedztwa dla grafu przykłądowego: {timer_end_adjList_default - timer_start_adjList_default} s")
-                    print(f"Czas wyliczania stopni wierzchołków: {timer_end_deg_default - timer_start_deg_default} s")
-                    print(f"Czas dodania wierzchołka: {timer_end_addVertex - timer_start_addVertex} s")
-                    print(f"Czas wyliczania liczby anihilacji: {timer_end_anihilation - timer_start_anihilation} s")
-                    print(f"Czas wyliczania potencjałów wierzchołków: {timer_end_potential - timer_start_potential} s")
-                    UI_LowLvL(int_input_graphType)
-                case 12:
                     print("Zmień graf.")
                     UI_HighLvL()   
         case 4:
             print("Koniec programu.")
             exit(0)
-graphType = UI_HighLvL()
+
+UI_HighLvL()
