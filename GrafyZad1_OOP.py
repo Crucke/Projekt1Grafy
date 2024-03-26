@@ -18,6 +18,9 @@ class Circle:
         )
         return distance < self.radius + other_circle.radius
 
+    def __str__(self):
+        return f"\nCircle ID: {self.id}, Center: ({self.x}, {self.y}), Radius: {self.radius}\n"
+
 # Klasa grafu kołowego, przechowuje listę kół, listę sąsiedztwa oraz metody tworzące listę sąsiedztwa, zapisujące graf do pliku oraz odczytujące graf z pliku
 class CircleGraph:
     def __init__(self, circles):
@@ -26,14 +29,19 @@ class CircleGraph:
 
     # Tworzenie listy sąsiedztw
     def create_adjacency_list(self):
-        adjacency_list = {i: [] for i in range(len(self.circles))}
-
-        for i in range(len(self.circles)):
-            for j in range(i + 1, len(self.circles)):
-                if self.circles[i].intersects(self.circles[j]):
-                    adjacency_list[i].append(j)
-                    adjacency_list[j].append(i)
+        adjacency_list = {}
+        for circle in self.circles:
+            neighbors = []
+            for other_circle in self.circles:
+                if circle != other_circle and circle.intersects(other_circle):
+                    neighbors.append(other_circle)
+            adjacency_list[circle] = neighbors
         return adjacency_list
+
+    def show_adjacency_list(self):
+        print("Lista sąsiedztwa:")
+        for circle, neighbors in self.adjacency_list.items():
+            print(circle, "neighbors:", [str(neighbor) for neighbor in neighbors])
 
     # Zapisywanie grafu do pliku z możliwością dodania komentarza
     def write_to_file(self, filename):
@@ -78,9 +86,7 @@ class CircleGraph:
         else:
             print("Circle with ID", circle_id, "not found.")
 
-    def show_adjacency_list(self):
-        for circle, neighbors in self.adjacency_list.items():
-            print("Circle", circle.id, "neighbors:", [neighbor.id for neighbor in neighbors])
+
 
 
     # Rysowanie grafu
@@ -495,6 +501,7 @@ Podaj odpowiednią cyfrę:
                     timer_start_paths = time()
                     graphFile.all_dfs_paths(target_length)
                     timer_end_paths = time()
+                    print(f"Czas wyliczania stopni wierzchołków z pliku: {timer_end_paths - timer_start_paths} s")
                     UI_LowLvL(int_input_graphType)
                 case 11:
                     print(f"Czas wyliczenia listy sąsiedztwa dla grafu przykłądowego: {timer_end_adjList_File - timer_start_adjList_File} s")
@@ -517,19 +524,22 @@ Podaj odpowiednią cyfrę:
 [2] Dodaj koło
 [3] Usuń koło
 [4] Narysuj graf
-[5] Zmień graf
+[5] Zapisz graf do pliku
+[6] Zmień graf
 """)
             int_input_actionType = int(input())
             match(int_input_actionType):
                 case 1:
-                    print(f"Lista sąsiedztwa:\n{graphCircle.adjacency_list}\n")
+                    print(f"Lista sąsiedztwa:\n{graphCircle.show_adjacency_list()}\n")
                     UI_LowLvL(int_input_graphType)
                 case 2:
+                    circle_id = int(input("Podaj id koła: "))
                     x = float(input("Podaj współrzędną x: "))
                     y = float(input("Podaj współrzędną y: "))
                     radius = float(input("Podaj promień: "))
-                    circle = Circle(x, y, radius)
+                    circle = Circle(circle_id, x, y, radius)
                     graphCircle.add_circle(circle)
+                    print(f"Dodano koło o id: {circle_id}")
                     UI_LowLvL(int_input_graphType)
                 case 3:
                     graphCircle.show_adjacency_list()
@@ -541,6 +551,11 @@ Podaj odpowiednią cyfrę:
                     graphCircle.plot_circles()
                     UI_LowLvL(int_input_graphType)
                 case 5:
+                    input_file = str(input("Podaj nazwę pliku: "))
+                    graphCircle.write_to_file(input_file)
+                    print("Zapisano")
+                    UI_HighLvL()
+                case 6:
                     print("Zmień graf.")
                     UI_HighLvL()   
         case 4:
