@@ -270,7 +270,7 @@ class Graph:
             annihilation_num += degree
             if annihilation_num >= num_edges:
                 return min(annihilation_num, num_edges)
-        self.annih_number = annihilation_num
+            self.annih_number = annihilation_num
         return annihilation_num
     
     # Wyliczanie potencjału grafu
@@ -295,6 +295,52 @@ class Graph:
         self.poten = max_potential
         return max_potential            
 
+class Statistics:
+    TimeAdjListDefault: float
+    TimeDegDefault: float
+    TimeAddVertexDefault: float
+    TimeAnnihilationDefault: float
+    TimePotentialDefault: float
+    TimeAdjListFile: float
+    TimeDegFile: float
+    TimeAddVertFile: float
+    TimeAnnihilationFile: float
+    TimePotentialFile: float
+    def __init__(self):
+        self.TimeAdjListDefault = 0
+        self.TimeDegDefault = 0
+        self.TimeAddVertexDefault = 0
+        self.TimeAnnihilationDefault = 0
+        self.TimePotentialDefault = 0
+        self.TimeAdjListFile = 0
+        self.TimeDegFile = 0
+        self.TimeAddVertFile = 0
+        self.TimeAnnihilationFile = 0
+        self.TimePotentialFile = 0
+
+    def set_TimeAdjListDefault(self, time):
+        self.TimeAdjListDefault = time
+    def set_TimeDegDefault(self, time):
+        self.TimeDegDefault = time
+    def set_TimeAddVertexDefault(self, time):
+        self.TimeAddVertexDefault = time
+    def set_TimeAnnihilationDefault(self, time):
+        self.TimeAnnihilationDefault = time
+    def set_TimePotentialDefault(self, time):
+        self.TimePotentialDefault = time
+    def set_TimeAdjListFile(self, time):
+        self.TimeAdjListFile = time
+    def set_TimeAddVertFile(self, time):
+        self.TimeAddVertFile = time
+    def set_TimeDegFile(self, time):
+        self.TimeDegFile = time
+    def set_TimeAnnihilationFile(self, time):
+        self.TimeAnnihilationFile = time
+    def set_TimePotentialFile(self, time):
+        self.TimePotentialFile = time
+    
+
+
 # Przykładowa macierz:
 matrix = [
     [0, 1, 1, 1, 1, 1],
@@ -306,46 +352,58 @@ matrix = [
 ]
 
 # Utworzenie obiektu grafu
+timeStats = Statistics()
 graph = Graph()
 timer_start_adjList_default = time()
 graph.matrix_to_list(matrix)
 timer_end_adjList_default = time()
 
+timeStats.set_TimeAdjListDefault(timer_end_adjList_default - timer_start_adjList_default)
+
 timer_start_deg_default = time()
 graph.calculate_degrees(graph.adjacency_list)
 timer_end_deg_default = time()
 
+timeStats.set_TimeDegDefault(timer_end_deg_default - timer_start_deg_default)
+
 timer_start_anihilation_default = time()
-graph.annihilation_number()
+graph.annihilation_number(graph.adjacency_list)
 timer_end_anihilation_default = time()
 
+timeStats.set_TimeAnnihilationDefault(timer_end_anihilation_default - timer_start_anihilation_default)
+
 timer_start_potential_default = time()
-graph.find_potential()
+graph.graph_potential()
 timer_end_potential_default = time()
 
+timeStats.set_TimePotentialDefault(timer_end_potential_default - timer_start_potential_default)
 
 graphFile = Graph()
 timer_start_adjList_File = time()
 graphFile.read_snap_file("graph.snap")
 timer_end_adjList_File = time()
 
+timeStats.set_TimeAdjListFile(timer_end_adjList_File - timer_start_adjList_File)
+
 timer_start_deg_File = time()
 graphFile.calculate_degrees(graphFile.adjacency_list)
 timer_end_deg_File = time()
+
+timeStats.set_TimeDegFile(timer_end_deg_File - timer_start_deg_File)
 
 timer_start_anihilation_File = time()
 graphFile.annihilation_number(graphFile.adjacency_list)
 timer_end_anihilation_File = time()
 
+timeStats.set_TimeAnnihilationFile(timer_end_anihilation_File - timer_start_anihilation_File)
+
 timer_start_potential_File = time()
-graphFile.find_potential(graphFile.degrees)
+graphFile.graph_potential()
 timer_end_potential_File = time()
 
-timer_start_readFile_circle = time()
+timeStats.set_TimePotentialFile(timer_end_potential_File - timer_start_potential_File)
+
 graphCircle = CircleGraph.read_from_file("circles.txt")
-timer_end_readFile_circle = time()
-
-
 
 # Funkcje interfejsu użytkownika
 def UI_HighLvL():
@@ -396,6 +454,7 @@ Podaj odpowiednią cyfrę:
                     timer_start_addVertex = time()
                     graph.add_vertex(vertex)
                     timer_end_addVertex = time()
+                    timeStats.set_TimeAddVertexDefault(timer_end_addVertex - timer_start_addVertex)
                     UI_LowLvL(int_input_graphType)
                 case 5:
                     vertex = int(input("Podaj wierzchołek do usunięcia: "))
@@ -412,10 +471,10 @@ Podaj odpowiednią cyfrę:
                     graph.remove_edge(vertex1, vertex2)
                     UI_LowLvL(int_input_graphType)
                 case 8:
-                    print(f"Liczba anihilacji: {graph.annihilation_number}")
+                    print(f"Liczba anihilacji: {graph.annih_number}")
                     UI_LowLvL(int_input_graphType)
                 case 9:
-                    print(f"Potencjał grafu: {graph.graph_potential}")
+                    print(f"Potencjał grafu: {graph.poten}")
                     UI_LowLvL(int_input_graphType)
                 case 10:
                     target_length = int(input("Podaj długość ścieżki: "))
@@ -425,22 +484,23 @@ Podaj odpowiednią cyfrę:
                     print(f"Czas wyliczania stopni wierzchołków z pliku: {timer_end_paths_default - timer_start_paths_default} s")
                     UI_LowLvL(int_input_graphType)
                 case 11:
-                    print(f"Czas wyliczenia listy sąsiedztwa dla grafu przykłądowego: {timer_end_adjList_default - timer_start_adjList_default} s")
-                    print(f"Czas wyliczania stopni wierzchołków: {timer_end_deg_default - timer_start_deg_default} s")
-                    print(f"Czas dodania wierzchołka: {timer_end_addVertex - timer_start_addVertex} s")
-                    print(f"Czas wyliczania liczby anihilacji: {timer_end_anihilation_default - timer_start_anihilation_default} s")
-                    print(f"Czas wyliczania potencjałów wierzchołków: {timer_end_potential_default - timer_start_potential_default} s")
+                    print(f"Czas wyliczenia listy sąsiedztwa dla grafu przykładowego: {timeStats.TimeAdjListDefault} s")
+                    print(f"Czas wyliczania stopni wierzchołków: {timeStats.TimeDegDefault} s")
+                    print(f"Czas dodawania wierzchołka: {timeStats.TimeAddVertexDefault} s")
+                    print(f"Czas wyliczania liczby anihilacji: {timeStats.TimeAnnihilationDefault} s")
+                    print(f"Czas wyliczania potencjałów wierzchołków: {timeStats.TimePotentialDefault} s")
                     UI_LowLvL(int_input_graphType)
                 case 12:
                     input_file = str(input("Podaj nazwę pliku: "))
                     graph.write_snap_file(input_file)
                     print("Zapisano")
+                    UI_LowLvL(int_input_graphType)
                 case 13:
                     print("Zmień graf.")
                     UI_HighLvL()
         case 2:
             print("""
-Wybierz akcję którą chcesz wykonać dla grafu przykładowego:
+Wybierz akcję którą chcesz wykonać dla grafu z pliku:
 Podaj odpowiednią cyfrę:
 [1] Wyświetl listę sąsiedztw
 [2] Wyświetl listę stopni wierzchołków
@@ -463,7 +523,6 @@ Podaj odpowiednią cyfrę:
                     UI_LowLvL(int_input_graphType)
                 case 2:
                     print(f"Lista stopni wierzchołków:\n{graphFile.degrees}\n")
-                    timer_end_deg_default = time()
                     UI_LowLvL(int_input_graphType)
                 case 3:
                     graphFile.print_matrix(graphFile.adjacency_list)
@@ -473,6 +532,7 @@ Podaj odpowiednią cyfrę:
                     timer_start_addVertex = time()
                     graphFile.add_vertex(vertex)
                     timer_end_addVertex = time()
+                    timeStats.set_TimeAddVertFile(timer_end_addVertex - timer_start_addVertex)
                     UI_LowLvL(int_input_graphType)
                 case 5:
                     vertex = int(input("Podaj wierzchołek do usunięcia: "))
@@ -489,12 +549,10 @@ Podaj odpowiednią cyfrę:
                     graphFile.remove_edge(vertex1, vertex2)
                     UI_LowLvL(int_input_graphType)
                 case 8:
-                    print(f"Liczba anihilacji: {graphFile.adjacency_list}")
+                    print(f"Liczba anihilacji: {graphFile.annih_number}")
                     UI_LowLvL(int_input_graphType)
                 case 9:
-                    timer_start_potential = time()
-                    print(f"Potencjał grafu: {graphFile.graph_potential}")
-                    timer_end_potential = time()
+                    print(f"Potencjał grafu: {graphFile.poten}")
                     UI_LowLvL(int_input_graphType)
                 case 10:
                     target_length = int(input("Podaj długość ścieżki: "))
@@ -504,10 +562,11 @@ Podaj odpowiednią cyfrę:
                     print(f"Czas wyliczania stopni wierzchołków z pliku: {timer_end_paths - timer_start_paths} s")
                     UI_LowLvL(int_input_graphType)
                 case 11:
-                    print(f"Czas wyliczenia listy sąsiedztwa dla grafu przykłądowego: {timer_end_adjList_File - timer_start_adjList_File} s")
-                    print(f"Czas wyliczania stopni wierzchołków: {timer_end_deg_File - timer_start_deg_File} s")
-                    print(f"Czas wyliczania liczby anihilacji: {timer_end_anihilation_File - timer_start_anihilation_File} s")
-                    print(f"Czas wyliczania potencjałów wierzchołków: {timer_end_potential_File - timer_start_potential_File} s")
+                    print(f"Czas wyliczenia listy sąsiedztwa dla grafu przykłądowego: {timeStats.TimeAdjListFile} s")
+                    print(f"Czas wyliczania stopni wierzchołków: {timeStats.TimeDegFile} s")
+                    print(f"Czas dodawania wierzchołka: {timeStats.TimeAddVertFile} s")
+                    print(f"Czas wyliczania liczby anihilacji: {timeStats.TimeAnnihilationFile} s")
+                    print(f"Czas wyliczania potencjałów wierzchołków: {timeStats.TimePotentialFile} s")
                     UI_LowLvL(int_input_graphType)
                 case 12:
                     input_file = str(input("Podaj nazwę pliku: "))
