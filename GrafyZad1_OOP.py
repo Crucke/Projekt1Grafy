@@ -3,9 +3,10 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle as pltCircle
 from time import time
 
-# Klasa koła, przechouje współrzędne x, y, promień oraz metodę sprawdzającą czy dwa koła się przecinają
+# Klasa koła, przechouje id koła, współrzędne x, y, promień oraz metodę sprawdzającą czy dwa koła się przecinają
 class Circle:
-    def __init__(self, x, y, radius):
+    def __init__(self, circle_Id, x, y, radius):
+        self.id = circle_Id
         self.x = x
         self.y = y
         self.radius = radius
@@ -17,6 +18,9 @@ class Circle:
         )
         return distance < self.radius + other_circle.radius
 
+    def __str__(self):
+        return f"\nCircle ID: {self.id}, Center: ({self.x}, {self.y}), Radius: {self.radius}\n"
+
 # Klasa grafu kołowego, przechowuje listę kół, listę sąsiedztwa oraz metody tworzące listę sąsiedztwa, zapisujące graf do pliku oraz odczytujące graf z pliku
 class CircleGraph:
     def __init__(self, circles):
@@ -25,14 +29,19 @@ class CircleGraph:
 
     # Tworzenie listy sąsiedztw
     def create_adjacency_list(self):
-        adjacency_list = {i: [] for i in range(len(self.circles))}
-
-        for i in range(len(self.circles)):
-            for j in range(i + 1, len(self.circles)):
-                if self.circles[i].intersects(self.circles[j]):
-                    adjacency_list[i].append(j)
-                    adjacency_list[j].append(i)
+        adjacency_list = {}
+        for circle in self.circles:
+            neighbors = []
+            for other_circle in self.circles:
+                if circle != other_circle and circle.intersects(other_circle):
+                    neighbors.append(other_circle)
+            adjacency_list[circle] = neighbors
         return adjacency_list
+
+    def show_adjacency_list(self):
+        print("Lista sąsiedztwa:")
+        for circle, neighbors in self.adjacency_list.items():
+            print(circle, "neighbors:", [str(neighbor) for neighbor in neighbors])
 
     # Zapisywanie grafu do pliku z możliwością dodania komentarza
     def write_to_file(self, filename):
@@ -42,9 +51,9 @@ class CircleGraph:
             comment = input("Podaj komentarz: ")
             with open(filename, "w") as f:
                 f.write(f"#{comment}\n")
-                f.write(f"#X Y Rad\n")
+                f.write(f"#Id X Y Rad\n")
                 for circle in self.circles:
-                    f.write(f"{circle.x} {circle.y} {circle.radius}\n")
+                    f.write(f"{circle.id} {circle.x} {circle.y} {circle.radius}\n")
 
     # Odczytanie grafu z pliku
     @classmethod
@@ -54,14 +63,31 @@ class CircleGraph:
             for line in f:
                 if line.startswith("#"):
                     continue
-                x, y, radius = map(float, line.strip().split())
-                circles.append(Circle(x, y, radius))
+                id, x, y, radius = map(float, line.strip().split())
+                circles.append(Circle(id, x, y, radius))
         return cls(circles)
 
     # Dodanie nowego koła do grafu
     def add_circle(self, circle):
         self.circles.append(circle)
         self.adjacency_list = self.create_adjacency_list()
+
+    def delete_circle_by_id(self, circle_id):
+        circle_to_remove = None
+        for circle in self.circles:
+            if circle.id == circle_id:
+                circle_to_remove = circle
+
+        if circle_to_remove:
+            if circle_to_remove in self.adjacency_list:
+                del self.adjacency_list[circle_to_remove]
+            else:
+                print("Circle not found in the adjacency list.")
+        else:
+            print("Circle with ID", circle_id, "not found.")
+
+
+
 
     # Rysowanie grafu
     def plot_circles(self):
@@ -86,6 +112,8 @@ class Graph:
     def __init__(self):
         self.adjacency_list = {}
         self.degrees = {}
+        self.annih_number = 0
+        self.poten = 0
 
     # Przetworzenie macierzy na listę sąsiedztwa
     def matrix_to_list(self, matrix):
@@ -100,17 +128,26 @@ class Graph:
                     degree += 1
             self.adjacency_list[i] = neighbors
             self.degrees[i] = degree
-        # print(f"Lista sąsiedztwa z macierzy:\n{self.adjacency_list}")
-        # print(f"Lista stopni wierzchołków z macierzy:\n{self.degrees}\n")
 
     # Przetworzenie listy sąsiedztwa na macierz
-    def list_to_matrix(self):
-        num_vertex = len(self.adjacency_list)
+    def list_to_matrix(self, adjacency_list=None):
+        adjacency_list = adjacency_list or self.adjacency_list
+        max_vertex = max(adjacency_list.keys()) if adjacency_list else 0
+        num_vertex = max_vertex + 1
         matrix = [[0] * num_vertex for _ in range(num_vertex)]
-        for vertex, neighbors in self.adjacency_list.items():
+        for vertex, neighbors in adjacency_list.items():
             for neighbor in neighbors:
-                matrix[vertex][neighbor] = 1
+                adjusted_neighbor = min(neighbor, max_vertex)  # Adjust neighbor index
+                matrix[vertex][adjusted_neighbor] = 1
         return matrix
+    
+    # Wypisanie macierzy sąsiedztwa
+    def print_matrix(self, adjacency_list=None):
+        adjacency_list = adjacency_list or self.adjacency_list
+        matrix = self.list_to_matrix(adjacency_list)
+        print("Matrix representation of the graph:")
+        for row in matrix:
+            print(row)
 
     # Dodanie krawędzi do listy sąsiedztwa
     def add_edge(self, vertex1, vertex2):
@@ -169,10 +206,6 @@ class Graph:
                         self.adjacency_list[vertex1].append(vertex2)
                     if vertex1 not in self.adjacency_list[vertex2]:
                         self.adjacency_list[vertex2].append(vertex1)
-            print("Czy wyświetlić listę sąsiedztw? T/N")
-            input_show = input()
-            if (input_show == "T") or (input_show == "t"):
-                print(f"Lista sąsiedztwa z pliku:\n{self.adjacency_list}\n")
         except FileNotFoundError:
             print(f"Plik {filename} nie został znaleziony.")
 
@@ -192,12 +225,8 @@ class Graph:
         self.degrees = {}
         for vertex, neighbors in adjacency_list.items():
             self.degrees[vertex] = len(neighbors)
-        print("Czy wyświetlić stopnie wierzchołków? T/N")
-        input_show = input()
-        if (input_show == "T") or (input_show == "t"):
-            print(f"Stopnie wierzchołków: {self.degrees}")
     
-    # Wyliczanie wszystkich ścieżek o zadanej długości
+    # Wyszukiwanie wszystkich ścieżek o zadanej długości
     def dfs_paths(self, start_vertex, path=[], path_length=0, target_length=3):
         path.append(start_vertex)
         paths = []
@@ -220,8 +249,10 @@ class Graph:
             all_paths.extend(paths)
         print(f"Całkowita liczba ścieżek {target_length}: {total_count/2}")
         return all_paths
-
-    def annihilation_number(self):
+    
+    # Wyliczanie liczby anihilacji
+    def annihilation_number(self, adjacency_list=None):
+        adjacency_list = adjacency_list or self.adjacency_list
         # Wyznaczanie stopnia wierzchołków
         degrees = [len(neighbors) for neighbors in self.adjacency_list.values()]
 
@@ -239,9 +270,12 @@ class Graph:
             annihilation_num += degree
             if annihilation_num >= num_edges:
                 return min(annihilation_num, num_edges)
+        self.annih_number = annihilation_num
         return annihilation_num
-
-    def find_potential(self):
+    
+    # Wyliczanie potencjału grafu
+    def find_potential(self, degrees=None):
+        degrees = degrees or self.degrees
         potentials = {}
         for v,degree in self.degrees.items():  # Loop through vertices and their degrees
             potential = 0
@@ -256,8 +290,10 @@ class Graph:
         return potentials
 
     def graph_potential(self):
-        potentials = self.find_potential()
-        return max(potentials.values())            
+        self.poten = self.find_potential()
+        max_potential = max(self.poten.values())
+        self.poten = max_potential
+        return max_potential            
 
 # Przykładowa macierz:
 matrix = [
@@ -271,105 +307,259 @@ matrix = [
 
 # Utworzenie obiektu grafu
 graph = Graph()
-
-# Przekształcenie macierzy na listę sąsiedztwa
+timer_start_adjList_default = time()
 graph.matrix_to_list(matrix)
-graph.calculate_degrees()
+timer_end_adjList_default = time()
 
-# Zapisanie grafu do pliku w formacie SNAP
-# graph.write_snap_file("graph.snap")
+timer_start_deg_default = time()
+graph.calculate_degrees(graph.adjacency_list)
+timer_end_deg_default = time()
 
-# Odczytanie grafu z pliku w formacie SNAP
-timer_start_readFile = time()
-adj_list_file = graph.read_snap_file("facebook_combined.txt")
-timer_end_readFile = time()
+timer_start_anihilation_default = time()
+graph.annihilation_number()
+timer_end_anihilation_default = time()
 
-timer_start_degFile = time()
-graph.calculate_degrees(adj_list_file)
-timer_end_degFile = time()
-# Dodania krawędzi i wierzchołków do listy sąsiedztwa
-# graph.add_vertex(6)
-# graph.add_vertex(7)
-# graph.add_edge(6, 7)
-# print(f"Lista sąsiedztwa:\n{graph.adjacency_list}\n")
-
-# Wylicz długość wszystkich ścieżek o wskazanej długości
-target_length = 3 
-time_start_findPaths = time()
-# graph.all_dfs_paths(target_length)
-time_end_findPaths = time()
-
-# Wyliczanie liczby anihilacji grafu
-time_start_annihilation = time()
-annihilation_number = graph.annihilation_number()
-time_end_annihilation = time()
+timer_start_potential_default = time()
+graph.find_potential()
+timer_end_potential_default = time()
 
 
-# Wyznaczanie potencjałów wierzchołków
-timer_start_potential = time()
-vertex_potentials = graph.find_potential()
-timer_end_potential = time()
-print(f"Potencjały wierzchołków: {vertex_potentials}")
+graphFile = Graph()
+timer_start_adjList_File = time()
+graphFile.read_snap_file("graph.snap")
+timer_end_adjList_File = time()
 
-# Wyznaczanie potencjału grafu
-graph_potential = graph.graph_potential()
-print(f"Potencjał grafu: {graph_potential}")
+timer_start_deg_File = time()
+graphFile.calculate_degrees(graphFile.adjacency_list)
+timer_end_deg_File = time()
 
-# Odczytaj z pliku circles.txt i wypisz listę sąsiedztwa
-circle_graph = CircleGraph.read_from_file("circles.txt")
-print(f"Lista sąsiedztw grafu kołowego:\n{circle_graph.adjacency_list}\n")
+timer_start_anihilation_File = time()
+graphFile.annihilation_number(graphFile.adjacency_list)
+timer_end_anihilation_File = time()
 
-def UI():
+timer_start_potential_File = time()
+graphFile.find_potential(graphFile.degrees)
+timer_end_potential_File = time()
+
+timer_start_readFile_circle = time()
+graphCircle = CircleGraph.read_from_file("circles.txt")
+timer_end_readFile_circle = time()
+
+
+
+# Funkcje interfejsu użytkownika
+def UI_HighLvL():
     print("""
-Czy chcesz wykonać jakąś czynność?
-Podaj odpowiednią cyfrę:
-[1] Wyświetlić liczbę anihilacji
-[2] Wyświetlić potencjał grafu
-[3] Wyliczyć ilość ścieżek
-[4] Dodanie nowego koła do grafu kołowego
-[5] Zapis do pliku grafu kołowego
-[6] Wyliczanie stopni wierzchołków grafu kołowego
-[7] Pokazanie grafu kołowego
-[8] Pokazanie czasów wykonania
-[9] Wyjście
+Dla jakiego grafu chcesz wykonywać czynności?
+[1] Graf przykładowy
+[2] Graf z pliku SNAP
+[3] Graf kołowy
+[4] Wyjdź
       """)
-    int_input = int(input())
+    int_input_graphType = int(input())
+    UI_LowLvL(int_input_graphType)
+    return int_input_graphType
 
-    match(int_input):
+def UI_LowLvL(int_input_graphType):
+    match(int_input_graphType):
         case 1:
-            print(f"Liczba anihilacji: {annihilation_number}")
-            UI()
+            print("""
+Wybierz akcję którą chcesz wykonać dla grafu przykładowego:
+Podaj odpowiednią cyfrę:
+[1] Wyświetl listę sąsiedztw
+[2] Wyświetl listę stopni wierzchołków
+[3] Wyświetl macierz sąsiedztwa
+[4] Dodaj wierzchołek
+[5] Usuń wierzchołek
+[6] Dodaj krawędź
+[7] Usuń krawędź
+[8] Wylicz liczbę anihilacji
+[9] Wylicz potencjał grafu
+[10] Wylicz wszystkie ścieżki o zadanej długości
+[11] Wypisz czasy operacji na grafie                  
+[12] Zapisz graf do pliku
+[13] Zmień graf
+""")
+            int_input_actionType = int(input())
+            match(int_input_actionType):
+                case 1:
+                    print(f"Lista sąsiedztwa:\n{graph.adjacency_list}\n")
+                    UI_LowLvL(int_input_graphType)
+                case 2:
+                    print(f"Lista stopni wierzchołków:\n{graph.degrees}\n")
+                    UI_LowLvL(int_input_graphType)
+                case 3:
+                    graph.print_matrix(graph.adjacency_list)
+                    UI_LowLvL(int_input_graphType)
+                case 4:
+                    vertex = int(input("Podaj wierzchołek do dodania: "))
+                    timer_start_addVertex = time()
+                    graph.add_vertex(vertex)
+                    timer_end_addVertex = time()
+                    UI_LowLvL(int_input_graphType)
+                case 5:
+                    vertex = int(input("Podaj wierzchołek do usunięcia: "))
+                    graph.remove_vertex(vertex)
+                    UI_LowLvL(int_input_graphType)
+                case 6:
+                    vertex1 = int(input("Podaj wierzchołek 1 dla którego chcesz stworzyć krawędź: "))
+                    vertex2 = int(input("Podaj wierzchołek 2 dla którego chcesz stworzyć krawędź: "))
+                    graph.add_edge(vertex1, vertex2)
+                    UI_LowLvL(int_input_graphType)
+                case 7:
+                    vertex1 = int(input("Podaj wierzchołek 1 dla którego chcesz usunąć krawędź: "))
+                    vertex2 = int(input("Podaj wierzchołek 2 dla którego chcesz usunąć krawędź: "))
+                    graph.remove_edge(vertex1, vertex2)
+                    UI_LowLvL(int_input_graphType)
+                case 8:
+                    print(f"Liczba anihilacji: {graph.annihilation_number}")
+                    UI_LowLvL(int_input_graphType)
+                case 9:
+                    print(f"Potencjał grafu: {graph.graph_potential}")
+                    UI_LowLvL(int_input_graphType)
+                case 10:
+                    target_length = int(input("Podaj długość ścieżki: "))
+                    timer_start_paths_default = time()
+                    graph.all_dfs_paths(target_length)
+                    timer_end_paths_default = time()
+                    print(f"Czas wyliczania stopni wierzchołków z pliku: {timer_end_paths_default - timer_start_paths_default} s")
+                    UI_LowLvL(int_input_graphType)
+                case 11:
+                    print(f"Czas wyliczenia listy sąsiedztwa dla grafu przykłądowego: {timer_end_adjList_default - timer_start_adjList_default} s")
+                    print(f"Czas wyliczania stopni wierzchołków: {timer_end_deg_default - timer_start_deg_default} s")
+                    print(f"Czas dodania wierzchołka: {timer_end_addVertex - timer_start_addVertex} s")
+                    print(f"Czas wyliczania liczby anihilacji: {timer_end_anihilation_default - timer_start_anihilation_default} s")
+                    print(f"Czas wyliczania potencjałów wierzchołków: {timer_end_potential_default - timer_start_potential_default} s")
+                    UI_LowLvL(int_input_graphType)
+                case 12:
+                    input_file = str(input("Podaj nazwę pliku: "))
+                    graph.write_snap_file(input_file)
+                    print("Zapisano")
+                case 13:
+                    print("Zmień graf.")
+                    UI_HighLvL()
         case 2:
-            print(f"Potencjał grafu: {graph_potential}")
-            UI()
+            print("""
+Wybierz akcję którą chcesz wykonać dla grafu przykładowego:
+Podaj odpowiednią cyfrę:
+[1] Wyświetl listę sąsiedztw
+[2] Wyświetl listę stopni wierzchołków
+[3] Wyświetl macierz sąsiedztwa
+[4] Dodaj wierzchołek
+[5] Usuń wierzchołek
+[6] Dodaj krawędź
+[7] Usuń krawędź
+[8] Wylicz liczbę anihilacji
+[9] Wylicz potencjał grafu
+[10] Wylicz wszystkie ścieżki o zadanej długości
+[11] Wypisz czasy operacji na grafie  
+[12] Wczytaj nowy graf z pliku           
+[13] Zmień rodzaj grafu
+                  """)
+            int_input_actionType = int(input())
+            match(int_input_actionType):
+                case 1:
+                    print(f"Lista sąsiedztwa:\n{graphFile.adjacency_list}\n")
+                    UI_LowLvL(int_input_graphType)
+                case 2:
+                    print(f"Lista stopni wierzchołków:\n{graphFile.degrees}\n")
+                    timer_end_deg_default = time()
+                    UI_LowLvL(int_input_graphType)
+                case 3:
+                    graphFile.print_matrix(graphFile.adjacency_list)
+                    UI_LowLvL(int_input_graphType)
+                case 4:
+                    vertex = int(input("Podaj wierzchołek do dodania: "))
+                    timer_start_addVertex = time()
+                    graphFile.add_vertex(vertex)
+                    timer_end_addVertex = time()
+                    UI_LowLvL(int_input_graphType)
+                case 5:
+                    vertex = int(input("Podaj wierzchołek do usunięcia: "))
+                    graphFile.remove_vertex(vertex)
+                    UI_LowLvL(int_input_graphType)
+                case 6:
+                    vertex1 = int(input("Podaj wierzchołek 1 dla którego chcesz stworzyć krawędź: "))
+                    vertex2 = int(input("Podaj wierzchołek 2 dla którego chcesz stworzyć krawędź: "))
+                    graphFile.add_edge(vertex1, vertex2)
+                    UI_LowLvL(int_input_graphType)
+                case 7:
+                    vertex1 = int(input("Podaj wierzchołek 1 dla którego chcesz usunąć krawędź: "))
+                    vertex2 = int(input("Podaj wierzchołek 2 dla którego chcesz usunąć krawędź: "))
+                    graphFile.remove_edge(vertex1, vertex2)
+                    UI_LowLvL(int_input_graphType)
+                case 8:
+                    print(f"Liczba anihilacji: {graphFile.adjacency_list}")
+                    UI_LowLvL(int_input_graphType)
+                case 9:
+                    timer_start_potential = time()
+                    print(f"Potencjał grafu: {graphFile.graph_potential}")
+                    timer_end_potential = time()
+                    UI_LowLvL(int_input_graphType)
+                case 10:
+                    target_length = int(input("Podaj długość ścieżki: "))
+                    timer_start_paths = time()
+                    graphFile.all_dfs_paths(target_length)
+                    timer_end_paths = time()
+                    print(f"Czas wyliczania stopni wierzchołków z pliku: {timer_end_paths - timer_start_paths} s")
+                    UI_LowLvL(int_input_graphType)
+                case 11:
+                    print(f"Czas wyliczenia listy sąsiedztwa dla grafu przykłądowego: {timer_end_adjList_File - timer_start_adjList_File} s")
+                    print(f"Czas wyliczania stopni wierzchołków: {timer_end_deg_File - timer_start_deg_File} s")
+                    print(f"Czas wyliczania liczby anihilacji: {timer_end_anihilation_File - timer_start_anihilation_File} s")
+                    print(f"Czas wyliczania potencjałów wierzchołków: {timer_end_potential_File - timer_start_potential_File} s")
+                    UI_LowLvL(int_input_graphType)
+                case 12:
+                    input_file = str(input("Podaj nazwę pliku: "))
+                    graphFile.read_snap_file(input_file)
+                    graphFile.calculate_degrees()
+                    UI_LowLvL(int_input_graphType)
+                case 13:
+                    UI_HighLvL()
         case 3:
-            print("TO DO")
-            # target_length = int(input("Podaj długość ścieżki: "))
-            # print(f"Całkowita liczba ścieżek {target_length}: {len(graph.all_dfs_paths(target_length))/2}")
-            UI()
+            print("""
+Wybierz akcję którą chcesz wykonać dla grafu kołowego:
+Podaj odpowiednią cyfrę:
+[1] Wyświetl listę sąsiedztw
+[2] Dodaj koło
+[3] Usuń koło
+[4] Narysuj graf
+[5] Zapisz graf do pliku
+[6] Zmień graf
+""")
+            int_input_actionType = int(input())
+            match(int_input_actionType):
+                case 1:
+                    print(f"Lista sąsiedztwa:\n{graphCircle.show_adjacency_list()}\n")
+                    UI_LowLvL(int_input_graphType)
+                case 2:
+                    circle_id = int(input("Podaj id koła: "))
+                    x = float(input("Podaj współrzędną x: "))
+                    y = float(input("Podaj współrzędną y: "))
+                    radius = float(input("Podaj promień: "))
+                    circle = Circle(circle_id, x, y, radius)
+                    graphCircle.add_circle(circle)
+                    print(f"Dodano koło o id: {circle_id}")
+                    UI_LowLvL(int_input_graphType)
+                case 3:
+                    graphCircle.show_adjacency_list()
+                    circle_id = int(input("Podaj id koła do usunięcia: "))
+                    graphCircle.delete_circle_by_id(circle_id)
+                    print(f"Usunięto koło o id: {circle_id}")
+                    UI_LowLvL(int_input_graphType)
+                case 4:
+                    graphCircle.plot_circles()
+                    UI_LowLvL(int_input_graphType)
+                case 5:
+                    input_file = str(input("Podaj nazwę pliku: "))
+                    graphCircle.write_to_file(input_file)
+                    print("Zapisano")
+                    UI_HighLvL()
+                case 6:
+                    print("Zmień graf.")
+                    UI_HighLvL()   
         case 4:
-            x = float(input("Podaj współrzędną x: "))
-            y = float(input("Podaj współrzędną y: "))
-            radius = float(input("Podaj promień: "))
-            circle_graph.add_circle(Circle(x, y, radius))
-            UI()
-        case 5:
-            circle_graph.write_to_file("circles.txt")
-            UI()
-        case 6:
-            graph.calculate_degrees(circle_graph.adjacency_list)
-            UI()
-        case 7:
-            circle_graph.plot_circles()
-            UI()
-        case 8:
-            print(f"Czas odczytu pliku: {timer_end_readFile - timer_start_readFile} s")
-            print(f"Czas wyliczania ścieżek: {time_end_findPaths - time_start_findPaths} s")
-            print(f"Czas wyliczania liczby anihilacji: {time_end_annihilation - time_start_annihilation} s")
-            print(f"Czas wyliczania potencjałów wierzchołków: {timer_end_potential - timer_start_potential} s")
-            print(f"Czas wyliczania stopni wierzchołków z pliku: {timer_end_degFile - timer_start_degFile} s")
-            UI()
-        case 9:
-            print("Exiting")
+            print("Koniec programu.")
+            exit(0)
 
-UI()
+UI_HighLvL()
