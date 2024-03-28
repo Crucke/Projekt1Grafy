@@ -56,7 +56,7 @@ class CircleGraph:
                     f.write(f"{circle.id} {circle.x} {circle.y} {circle.radius}\n")
 
     # Odczytanie grafu z pliku
-    def read_from_file(cls, filename):
+    def read_from_file(self, filename):
         circles = []
         with open(filename, "r") as f:
             for line in f:
@@ -64,7 +64,7 @@ class CircleGraph:
                     continue
                 id, x, y, radius = map(float, line.strip().split())
                 circles.append(Circle(id, x, y, radius))
-        return cls(circles)
+        return self(circles)
 
     # Dodanie nowego koła do grafu
     def add_circle(self, circle):
@@ -393,8 +393,8 @@ graphFile.graph_potential()
 timer_end_potential_File = time()
 
 timeStats.set_TimePotentialFile(timer_end_potential_File - timer_start_potential_File)
-
-graphCircle = CircleGraph.read_from_file("circles.txt")
+graphCircle = CircleGraph
+graphCircle = CircleGraph.read_from_file(graphCircle,"circles.txt")
 
 # Funkcje interfejsu użytkownika
 def UI_HighLvL():
