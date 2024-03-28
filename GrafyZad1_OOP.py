@@ -19,7 +19,7 @@ class Circle:
         return distance < self.radius + other_circle.radius
 
     def __str__(self):
-        return f"\nCircle ID: {self.id}, Center: ({self.x}, {self.y}), Radius: {self.radius}\n"
+        return f"Circle ID: {self.id}, center: ({self.x}, {self.y}), radius: {self.radius}"
 
 # Klasa grafu kołowego, przechowuje listę kół, listę sąsiedztwa oraz metody tworzące listę sąsiedztwa, zapisujące graf do pliku oraz odczytujące graf z pliku
 class CircleGraph:
@@ -41,7 +41,7 @@ class CircleGraph:
     def show_adjacency_list(self):
         print("Lista sąsiedztwa:")
         for circle, neighbors in self.adjacency_list.items():
-            print(circle, "neighbors:", [str(neighbor) for neighbor in neighbors])
+            print(circle, "has neighbors:", [str(neighbor) for neighbor in neighbors],"\n")
 
     # Zapisywanie grafu do pliku z możliwością dodania komentarza
     def write_to_file(self, filename):
@@ -77,7 +77,6 @@ class CircleGraph:
         for circle in self.circles:
             if circle.id == circle_id:
                 circle_to_remove = circle
-
         if circle_to_remove:
             if circle_to_remove in self.adjacency_list:
                 del self.adjacency_list[circle_to_remove]
@@ -137,7 +136,7 @@ class Graph:
         matrix = [[0] * num_vertex for _ in range(num_vertex)]
         for vertex, neighbors in adjacency_list.items():
             for neighbor in neighbors:
-                adjusted_neighbor = min(neighbor, max_vertex)  # Adjust neighbor index
+                adjusted_neighbor = min(neighbor, max_vertex) 
                 matrix[vertex][adjusted_neighbor] = 1
         return matrix
     
@@ -195,9 +194,9 @@ class Graph:
                 for line in file:
                     if line.startswith("#"):
                         continue
-                    vertexs = line.strip().split()
-                    vertex1 = int(vertexs[0])
-                    vertex2 = int(vertexs[1])
+                    vertex = line.strip().split()
+                    vertex1 = int(vertex[0])
+                    vertex2 = int(vertex[1])
                     if vertex1 not in self.adjacency_list:
                         self.add_vertex(vertex1)
                     if vertex2 not in self.adjacency_list:
@@ -253,19 +252,12 @@ class Graph:
     # Wyliczanie liczby anihilacji
     def annihilation_number(self, adjacency_list=None):
         adjacency_list = adjacency_list or self.adjacency_list
-        # Wyznaczanie stopnia wierzchołków
         degrees = [len(neighbors) for neighbors in self.adjacency_list.values()]
-
-        # Sortowanie stopni wierzchołków w kolejności rosnącej
         degrees.sort()
-
-        # Wylicz ilość krawędzi w grafie
         num_edges = (
             sum(len(neighbors) for neighbors in self.adjacency_list.values()) // 2
         )
-
         annihilation_num = 0
-        # Zsumuj stopnie wierzchołków, aż suma przekroczy ilość krawędzi
         for degree in degrees:
             annihilation_num += degree
             if annihilation_num >= num_edges:
@@ -277,16 +269,16 @@ class Graph:
     def find_potential(self, degrees=None):
         degrees = degrees or self.degrees
         potentials = {}
-        for v,degree in self.degrees.items():  # Loop through vertices and their degrees
+        for v,degree in self.degrees.items():
             potential = 0
             for i in range(
                 1, degree + 1
-            ):  # Check degrees from 1 to the degree of the vertex
-                if i <= degree:  # If the degree is greater than or equal to the index
-                    potential = i  # Update the potential
+            ):
+                if i <= degree:
+                    potential = i
                 else:
-                    break  # Break the loop if the condition is not met
-            potentials[v] = potential  # Store the potential for the vertex
+                    break
+            potentials[v] = potential
         return potentials
 
     def graph_potential(self):
@@ -402,7 +394,6 @@ graphFile.graph_potential()
 timer_end_potential_File = time()
 
 timeStats.set_TimePotentialFile(timer_end_potential_File - timer_start_potential_File)
-
 graphCircle = CircleGraph.read_from_file("circles.txt")
 
 # Funkcje interfejsu użytkownika
