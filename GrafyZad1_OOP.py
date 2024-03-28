@@ -19,7 +19,7 @@ class Circle:
         return distance < self.radius + other_circle.radius
 
     def __str__(self):
-        return f"\nCircle ID: {self.id}, Center: ({self.x}, {self.y}), Radius: {self.radius}\n"
+        return f"Circle ID: {self.id}, center: ({self.x}, {self.y}), radius: {self.radius}"
 
 # Klasa grafu kołowego, przechowuje listę kół, listę sąsiedztwa oraz metody tworzące listę sąsiedztwa, zapisujące graf do pliku oraz odczytujące graf z pliku
 class CircleGraph:
@@ -41,7 +41,7 @@ class CircleGraph:
     def show_adjacency_list(self):
         print("Lista sąsiedztwa:")
         for circle, neighbors in self.adjacency_list.items():
-            print(circle, "neighbors:", [str(neighbor) for neighbor in neighbors])
+            print(circle, "has neighbors:", [str(neighbor) for neighbor in neighbors],"\n")
 
     # Zapisywanie grafu do pliku z możliwością dodania komentarza
     def write_to_file(self, filename):
@@ -56,7 +56,8 @@ class CircleGraph:
                     f.write(f"{circle.id} {circle.x} {circle.y} {circle.radius}\n")
 
     # Odczytanie grafu z pliku
-    def read_from_file(self, filename):
+    @classmethod
+    def read_from_file(cls, filename):
         circles = []
         with open(filename, "r") as f:
             for line in f:
@@ -64,7 +65,7 @@ class CircleGraph:
                     continue
                 id, x, y, radius = map(float, line.strip().split())
                 circles.append(Circle(id, x, y, radius))
-        return self(circles)
+        return cls(circles)
 
     # Dodanie nowego koła do grafu
     def add_circle(self, circle):
@@ -393,8 +394,7 @@ graphFile.graph_potential()
 timer_end_potential_File = time()
 
 timeStats.set_TimePotentialFile(timer_end_potential_File - timer_start_potential_File)
-graphCircle = CircleGraph
-graphCircle = CircleGraph.read_from_file(graphCircle,"circles.txt")
+graphCircle = CircleGraph.read_from_file("circles.txt")
 
 # Funkcje interfejsu użytkownika
 def UI_HighLvL():
